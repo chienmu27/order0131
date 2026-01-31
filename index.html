@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>訂購與查詢系統</title>
+    <style>
+        :root { --primary: #4285f4; --bg: #f8f9fa; --text: #333; }
+        body { font-family: "Microsoft JhengHei", sans-serif; background: var(--bg); margin: 0; color: var(--text); }
+        
+        /* 導航列樣式 */
+        .nav-bar { background: #fff; padding: 15px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100; }
+        .nav-btn {
+            background: transparent; border: 2px solid var(--primary); color: var(--primary);
+            padding: 8px 20px; border-radius: 20px; cursor: pointer; font-size: 16px; margin: 0 5px; transition: 0.3s;
+        }
+        .nav-btn.active, .nav-btn:hover { background: var(--primary); color: white; }
+
+        /* 內容容器 */
+        .container { max-width: 800px; margin: 20px auto; padding: 0 15px; }
+        
+        /* 區塊顯示控制 */
+        .section { display: none; animation: fadeIn 0.4s; }
+        .section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Google Form RWD */
+        .form-container iframe { width: 100%; height: 80vh; border: none; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+
+        /* 查詢介面樣式 (沿用你原本的設計並微調) */
+        .search-box { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); text-align: center; max-width: 450px; margin: 0 auto; }
+        input[type="text"] { width: 80%; padding: 12px; margin: 15px 0; border: 2px solid #eee; border-radius: 8px; font-size: 18px; text-align: center; outline: none; }
+        input:focus { border-color: var(--primary); }
+        .action-btn { background: var(--primary); color: white; border: none; padding: 12px 0; border-radius: 8px; cursor: pointer; font-size: 16px; width: 85%; font-weight: bold; }
+        
+        /* 查詢結果樣式 */
+        #resultArea { margin-top: 20px; max-width: 450px; margin-left: auto; margin-right: auto; }
+        .result-card { background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); overflow: hidden; margin-bottom: 20px; }
+        .data-row { display: flex; border-bottom: 1px solid #f0f0f0; padding: 15px; justify-content: space-between; align-items: center; }
+        .data-row:last-child { border-bottom: none; }
+        .data-label { color: #666; font-weight: bold; font-size: 14px; }
+        .data-value { color: #222; font-size: 15px; text-align: right; }
+        
+        /* Loading 動畫 */
+        .spinner { display: inline-block; width: 18px; height: 18px; border: 3px solid #f3f3f3; border-top: 3px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; vertical-align: middle; margin-right: 8px; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        #loading { display: none; margin-top: 15px; color: #666; }
+    </style>
+</head>
+<body>
+
+    <div class="nav-bar">
+        <button class="nav-btn active" onclick="switchTab('form')">填寫訂購單</button>
+        <button class="nav-btn" onclick="switchTab('query')">訂單查詢</button>
+    </div>
+
+    <div class="container">
+        <div id="form-section" class="section active">
+            <div class="form-container">
+                <iframe src="https://docs.google.com/forms/d/e/1FAIpQLSdXlk7EdJkupKMgFA6zgDUkhw622IXwkYvx5yJGfkaMhRe1ZQ/viewform?embedded=true">Loading…</iframe>
+            </div>
+        </div>
+
+        <div id="query-section" class="section">
+            <div class="search-box">
+                <h3 style="color: var(--primary); margin-top:0;">🔍 訂單進度查詢</h3>
+                <p style="font-size:14px; color:#888;">請輸入「匯款帳號後五碼」</p>
+                <input type="text" id="verifyCode" placeholder="請輸入 5 位數字" maxlength="5">
+                <button class="action-btn" onclick="queryData()">送出查詢</button>
+                <div id="loading"><div class="spinner"></div> 正在檢索資料...</div>
+            </div>
+            <div id="resultArea"></div>
+        </div>
+    </div>
+
+<script>
+    // === 頁面切換邏輯 ===
+    function switchTab(tabName) {
+        // 隱藏所有區塊
+        document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+        
+        // 顯示選定區塊
+        document.getElementById(tabName + '-section').classList.add('active');
+        
+        // 按鈕樣式更新
+        const btnText = tabName === 'form' ? '填寫訂購單' : '訂單查詢';
+        const buttons = document.querySelectorAll('.nav-btn');
+        buttons.forEach(btn => {
+            if(btn.innerText === btnText) btn.classList.add('active');
+        });
+    }
+
+    // === 查詢系統邏輯 ===
+    // 注意：請確保此 URL 是您最新的 Apps Script 部署網址
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxN9W9BPvkQ5riAjS2ROvOF8T2BRIMmfKIfmpp-FBsW2IE7Da5cWCWEJALkkn7x6Eqx/exec";
+
+    async function queryData() {
+        const codeInput = document.getElementById('verifyCode');
+        const code = codeInput.value.trim();
+        const resultArea = document.getElementById('resultArea');
+        const loading = document.getElementById('loading');
+        
+        if (code.length < 5) { alert("請輸入完整的 5 位數字"); return; }
+        
+        resultArea.innerHTML = '';
+        loading.style.display = 'block';
+
+        try {
+            // 使用 fetch 發送請求
+            // 模式說明：text/plain 是為了避免 CORS 預檢請求 (Preflight)，這是 GAS API 的常見技巧
+            const response = await fetch(SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify({ code: code }),
+                headers: { "Content-Type": "text/plain;charset=utf-8" }
+            });
+            
+            const res = await response.json();
+
+            if (res.status === 'success') {
+                renderResult(res.data);
+                codeInput.value = '';
+            } else {
+                alert(res.message);
+            }
+        } catch (err) {
+            console.error(err);
+            alert("連線錯誤：請確認網路，或檢查 Apps Script 部署權限是否設為「任何人」。");
+        } finally {
+            loading.style.display = 'none';
+        }
+    }
+
+    function renderResult(data) {
+        const container = document.getElementById('resultArea');
+        let html = '<div class="result-card">';
+        data.forEach(item => {
+            html += `
+            <div class="data-row">
+                <div class="data-label">${item.label}</div>
+                <div class="data-value">${(item.value !== "" && item.value !== null) ? item.value : "-"}</div>
+            </div>`;
+        });
+        html += '</div>';
+        container.innerHTML = html;
+    }
+</script>
+
+</body>
+</html>
