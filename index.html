@@ -3,47 +3,172 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>訂單系統</title>
+    <title>2026 馬之年新春計畫 - 訂單系統</title>
     <style>
-        :root { --primary: #4285f4; --bg: #f8f9fa; }
-        body { font-family: sans-serif; background: var(--bg); margin: 0; text-align: center; }
-        .nav { background: #fff; padding: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .nav button { padding: 10px 20px; margin: 0 5px; cursor: pointer; border: 1px solid var(--primary); background: #fff; color: var(--primary); border-radius: 5px; }
-        .nav button.active { background: var(--primary); color: #fff; }
-        .container { max-width: 500px; margin: 20px auto; padding: 0 15px; }
-        .card { background: #fff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        input { width: 80%; padding: 12px; margin: 15px 0; border: 1px solid #ddd; border-radius: 6px; font-size: 16px; }
-        .btn-send { background: var(--primary); color: #fff; border: none; padding: 12px 30px; border-radius: 6px; cursor: pointer; width: 80%; font-size: 16px; }
-        #resultArea { margin-top: 20px; text-align: left; }
-        .item { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #eee; }
-        #loading { display: none; margin: 10px; color: #666; }
+        :root { 
+            --red: #b22222; /* 朱砂紅 */
+            --gold: #d4af37; /* 富貴金 */
+            --bg: #fdf5e6; /* 老宣紙色 */
+            --text: #2c2c2c;
+        }
+
+        body { 
+            font-family: "Microsoft JhengHei", "PingFang TC", serif; 
+            background-color: var(--bg); 
+            background-image: radial-gradient(var(--gold) 0.5px, transparent 0.5px);
+            background-size: 30px 30px; /* 微小的裝飾點 */
+            margin: 0; 
+            color: var(--text);
+            text-align: center; 
+        }
+
+        /* 頂部導航 - 中國風捲軸感 */
+        .nav { 
+            background: var(--red); 
+            padding: 20px; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2); 
+            border-bottom: 4px solid var(--gold);
+        }
+
+        .nav button { 
+            padding: 12px 25px; 
+            margin: 0 10px; 
+            cursor: pointer; 
+            border: 2px solid var(--gold); 
+            background: transparent; 
+            color: var(--gold); 
+            border-radius: 0px; /* 方正顯得莊重 */
+            font-size: 18px;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .nav button.active { 
+            background: var(--gold); 
+            color: var(--red); 
+        }
+
+        .nav button:hover {
+            background: rgba(212, 175, 55, 0.2);
+        }
+
+        /* 內容容器 - 增加寬度與高度 */
+        .container { 
+            max-width: 900px; /* 寬度加寬以容納表單 */
+            margin: 30px auto; 
+            padding: 0 20px; 
+        }
+
+        /* 隱藏捲軸的關鍵：增加 iframe 高度 */
+        #form-box {
+            width: 100%;
+            overflow: hidden; /* 防止父容器出現捲軸 */
+            background: #fff;
+            border: 8px double var(--gold); /* 雙邊框 */
+            border-radius: 4px;
+        }
+
+        iframe {
+            display: block;
+            width: 100%;
+            height: 1250px; /* 大幅增加高度以完整顯示 Google Form */
+            border: none;
+        }
+
+        /* 查詢卡片美化 */
+        .card { 
+            background: #fff; 
+            padding: 40px 25px; 
+            border: 2px solid var(--red);
+            border-radius: 0px; 
+            box-shadow: 10px 10px 0px var(--gold); /* 復古陰影 */
+            position: relative;
+        }
+
+        .card h3 {
+            color: var(--red);
+            font-size: 24px;
+            margin-top: 0;
+            border-bottom: 1px solid var(--gold);
+            display: inline-block;
+            padding-bottom: 5px;
+        }
+
+        input { 
+            width: 80%; 
+            padding: 15px; 
+            margin: 20px 0; 
+            border: 1px solid var(--gold); 
+            background: #fff;
+            font-size: 18px; 
+            text-align: center;
+        }
+
+        .btn-send { 
+            background: var(--red); 
+            color: var(--gold); 
+            border: none; 
+            padding: 15px 40px; 
+            cursor: pointer; 
+            width: 85%; 
+            font-size: 20px; 
+            font-weight: bold;
+            box-shadow: 0 4px 0px #7b1818;
+        }
+
+        .btn-send:active {
+            transform: translateY(4px);
+            box-shadow: none;
+        }
+
+        #resultArea { margin-top: 30px; text-align: left; }
+
+        .item { 
+            display: flex; 
+            justify-content: space-between; 
+            padding: 15px; 
+            border-bottom: 1px dashed var(--gold); 
+        }
+
+        .item span { color: #666; font-size: 14px; }
+        .item b { color: var(--red); font-size: 16px; }
+
+        #loading { display: none; margin: 15px; color: var(--red); font-weight: bold; }
+
+        /* 針對手機優化 */
+        @media (max-width: 600px) {
+            .container { padding: 0 10px; }
+            iframe { height: 1600px; } /* 手機版表單通常會拉更長 */
+            .nav button { padding: 8px 15px; font-size: 16px; margin: 0 5px; }
+        }
     </style>
 </head>
 <body>
 
 <div class="nav">
-    <button id="tab1" class="active" onclick="show('form')">訂購表單</button>
-    <button id="tab2" onclick="show('query')">訂單查詢</button>
+    <button id="tab1" class="active" onclick="show('form')">🧧 填寫訂購單</button>
+    <button id="tab2" onclick="show('query')">📜 訂單查詢</button>
 </div>
 
 <div class="container">
     <div id="form-box">
-        <iframe src="https://docs.google.com/forms/d/e/1FAIpQLSdXlk7EdJkupKMgFA6zgDUkhw622IXwkYvx5yJGfkaMhRe1ZQ/viewform?embedded=true" width="100%" height="800" frameborder="0">載入中…</iframe>
+        <iframe src="https://docs.google.com/forms/d/e/1FAIpQLSdXlk7EdJkupKMgFA6zgDUkhw622IXwkYvx5yJGfkaMhRe1ZQ/viewform?embedded=true">載入中…</iframe>
     </div>
 
     <div id="query-box" style="display:none;">
         <div class="card">
-            <h3>🔍 訂單查詢</h3>
-            <input type="text" id="code" placeholder="請輸入匯款後五碼" maxlength="5">
-            <button class="btn-send" onclick="doSearch()">開始查詢</button>
-            <div id="loading">讀取中...</div>
+            <h3>新年訂單檢索</h3>
+            <p style="color: #888;">請輸入「匯款帳號後五碼」以供核對</p>
+            <input type="text" id="code" placeholder="五位數字" maxlength="5" inputmode="numeric">
+            <br>
+            <button class="btn-send" onclick="doSearch()">查詢訂單狀態</button>
+            <div id="loading">🏮 正為您翻閱帳冊...</div>
             <div id="resultArea"></div>
         </div>
     </div>
 </div>
 
 <script>
-    // 這裡請貼上你最新的 GAS 網址
     const API_URL = "https://script.google.com/macros/s/AKfycbyD5ToaxS_kZlFnwlXjuu7Kn9hmN2DFXQTiv2rx7WHT7K_4PIOlaCUqJlxzW_F1R7XL/exec";
 
     function show(type) {
@@ -51,11 +176,13 @@
         document.getElementById('query-box').style.display = type === 'query' ? 'block' : 'none';
         document.getElementById('tab1').className = type === 'form' ? 'active' : '';
         document.getElementById('tab2').className = type === 'query' ? 'active' : '';
+        // 切換時回到頂部
+        window.scrollTo(0, 0);
     }
 
     async function doSearch() {
         const code = document.getElementById('code').value.trim();
-        if(code.length < 5) return alert("請輸入5位數");
+        if(code.length < 5) return alert("請輸入完整的 5 位數字");
 
         const loading = document.getElementById('loading');
         const resDiv = document.getElementById('resultArea');
@@ -64,10 +191,7 @@
         resDiv.innerHTML = '';
 
         try {
-            // 使用 GET 模式配合 URLSearchParams，避開 POST 的預檢問題
             const finalUrl = `${API_URL}?code=${code}`;
-            
-            // 使用 fetch 且不設定 headers 以保持簡單請求 (Simple Request)
             const response = await fetch(finalUrl, { method: 'GET' });
             const result = await response.json();
 
@@ -75,15 +199,15 @@
                 resDiv.innerHTML = result.data.map(i => `
                     <div class="item">
                         <span>${i.label}</span>
-                        <b>${i.value || '-'}</b>
+                        <b>${(i.value !== "" && i.value !== null) ? i.value : "無"}</b>
                     </div>
                 `).join('');
             } else {
-                alert(result.message);
+                alert("查無資料：請確認後五碼是否正確，或尚未入帳。");
             }
         } catch (e) {
             console.error(e);
-            alert("連線失敗！原因：1. GAS 未部署為「任何人」 2. 網址錯誤 3. 瀏覽器阻擋跨網域請求");
+            alert("系統繁忙，請稍後再試。");
         } finally {
             loading.style.display = 'none';
         }
